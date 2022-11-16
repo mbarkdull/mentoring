@@ -38,6 +38,9 @@ It's important to understand the kind of data we want here. What we're looking f
 ### Manual downloading vs. scripting
 Now, we could click through and download all of these by hand. However, that would be both (1) REALLY tedious and (2) Not reproducible- we would have no record of what exactly we downloaded, and the search results might change in the future! So, writing a Bash script is going to be a better approach. 
 
+### Housekeeping and setup 
+Whenever you're coding, you want to make sure you're doing everything from inside the directory/repository that corresponds to your project. Use `pwd` on the command line to check where you're currently located, and `cd` if you aren't inside the correct directory. 
+
 ### How to download files with Bash commands?
 One of the most important skills in coding is understanding how to find help when you need it- that means lots of Googling and consulting with sites like StackOverflow. When I'm deep in a coding project, I probably do this tens to hundreds of times a day! We'll start practicing that now. 
 
@@ -139,6 +142,8 @@ We've got a basic script that prints the text "Hello world". Now let's make some
 3. Save it with a meaningful name that tells you what the script does
 4. Via the command line, make the script executable with `chmod`
 
+**Now would also be a great time to make sure our script is up on Github!**
+
 When writing a script, I think it's easiest to start small and then build big. In other words, start with the most simple version of the task you want to accomplish: in this case, downloading a bunch of genomes. 
 
 <details>
@@ -154,12 +159,13 @@ When writing a script, I think it's easiest to start small and then build big. I
 #### Doing the same task many times, with Bash
 Once we've written the code for a mini-version of our bigger task, we can build up. Now that we know how to download one genome, we can think about how to download several genomes. 
 
-Often a really good way to do this with Bash code is with something called a **loop**. Loops let us take a series of commands and keep re-running them until a particular condition is reached. They are useful for automating repetitive tasks.
+Often a really good way to do this with Bash code is with something called a **loop**. Loops let us feed some input into a series of commands and keep re-running them until a particular condition is reached. They are useful for automating repetitive tasks.
 
 <details>
   <summary>What different kind of loop exist in Bash? Use Google to find an answer.</summary>
   
   Bash has three basic kinds of loops:
+  
   1. For loops
   2. While loops
   3. Until loops
@@ -182,7 +188,7 @@ Loops will run over and over until a final condition is satisfied.
   for name in $names
   # Print the name
   do
-  echo $name
+    echo $name
   done
   echo All done
   ```
@@ -222,8 +228,64 @@ Loops will run over and over until a final condition is satisfied.
 
 We want to download a whole bunch of genome assemblies using `wget`. What kind of loop do you think makes the most sense here? Think about their conditions. 
 <details>
-  <summary>What kind of loop could we use to download our genomes?</summary>
+  <summary>What kind of loop could we use to download our genomes? If you're feeling stuck, try using Google and StackOverflow.</summary>
   
-  I would use a for loop. I can't think of a logical TRUE/FALSE condition to give to a while or until loop, but we could use a for loop to iterate over a list of genomes!
+  I would actually use a while loop, to read each line of a list of genomes and download them til there are no more lines of the file left. You could also write this as an until loop.
+  
+  To learn more, check out [this StackOverflow answer](https://stackoverflow.com/questions/1521462/looping-through-the-content-of-a-file-in-bash).
 
+</details>
+
+Keep in mind **there is no wrong answer**. As long as your code does what you want, and other people can understand how it's doing that, you're good to go! What makes sense to me might not be the most obvious answer to you, and that's ok. We can use comments in our code to help other people understand our reasoning. 
+
+Now we can start writing the code to build up from our single, simple task to the bigger goal we want to accomplish. 
+
+<details>
+  <summary>What is the basic syntax of a Bash while loop? Use Google.</summary>
+  The basic syntax is:
+  
+  ```
+  while [ condition ]
+  do
+   command1
+   command2
+   command3
+  done
+  ```
+  
+  So, we need to figure out the right condition and think about what commands we want to run.
+</details>
+
+
+##### How would we write a while loop to iterate over a list of genomes and download them? 
+This is a good time to turn to Google. We could do a ton of research, learning a lot in depth about while loops and different Bash commands- but it's probably more efficient to see if anyone else has figured out a good solution for how to **iterate over lines of a file with Bash**. 
+
+<details>
+  <summary>What do you find if you Google this problem?</summary>
+  I found a couple of answers that look useful:
+  
+  + [This StackOverflow question and it's answers](https://stackoverflow.com/questions/1521462/looping-through-the-content-of-a-file-in-bash)
++ [This post has some ideas](https://www.baeldung.com/linux/bash-loop-file-content)
++ [This post](https://codefather.tech/blog/bash-loop-through-lines-file/) suggests using a for loop, demonstrating that there are always multiple ways to do this same thing!
+  
+</details>
+
+##### Putting the pieces together in a script
+So we've decided to use a while loop to read through the lines of a file that lists genome URLs and download the URL on each line. 
+
+Let's turn that verbal description of what we want to do into a Bash script. 
+
+<details>
+  <summary>What does your script look like?</summary>
+  This is what I would do:
+  
+  ```
+  #!/bin/bash
+  
+  while read -r line;
+  do
+    wget $line
+  done < genomeURLs.txt
+  ```
+  
 </details>
