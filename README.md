@@ -729,6 +729,35 @@ plain text.
 
 </details>
 
+<details>
+
+<summary>Now, how would you download the files to the nice filenames?
+</summary>
+
+Your script should look like:
+
+``` 
+  # While reading each line of the file:
+  while read -r line;
+  do
+      # Echo the value of $line
+      echo $line
+      # Create the transcriptUrl variable:
+      export transcriptUrl=`echo "$line" | awk -F',' '{print $1}'`
+        
+      # Create the speciesCode variable
+      export speciesCode=`echo "$line" | awk -F',' '{print $2}'`
+        
+      # Create the filename variable with a nice filename:
+      export filename=$speciesCode'_genomeAssembly.fna.gz'
+
+      # Download the genome assembly, whose filename is in $filename and URL is stored in $transcriptUrl:
+      wget -O $filename $transcriptUrl
+  done < genomeURLs.txt
+```
+
+</details>
+
 ### Bash and command line options
 
 With the way our script is currently written, it will only run on a
