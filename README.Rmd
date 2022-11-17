@@ -39,7 +39,20 @@ It's important to understand the kind of data we want here. What we're looking f
 Now, we could click through and download all of these by hand. However, that would be both (1) REALLY tedious and (2) Not reproducible- we would have no record of what exactly we downloaded, and the search results might change in the future! So, writing a Bash script is going to be a better approach. 
 
 ### Housekeeping and setup 
-Whenever you're coding, you want to make sure you're doing everything from inside the directory/repository that corresponds to your project. Use `pwd` on the command line to check where you're currently located, and `cd` if you aren't inside the correct directory. 
+Whenever you're coding, you want to make sure you're doing everything from inside the directory/repository that corresponds to your project. 
+
+<details>
+  <summary>How do you check which directory you're in, using the command line?</summary>
+  
+  Use the command `pwd`.
+  
+  ```{bash, engine.opts='-l'}
+  pwd
+  ```
+
+</details>
+
+If you aren't inside the correct directory, use `cd` to get there. 
 
 ### How to download files with Bash commands?
 One of the most important skills in coding is understanding how to find help when you need it- that means lots of Googling and consulting with sites like StackOverflow. When I'm deep in a coding project, I probably do this tens to hundreds of times a day! We'll start practicing that now. 
@@ -270,7 +283,7 @@ This is a good time to turn to Google. We could do a ton of research, learning a
   
 </details>
 
-##### Putting the pieces together in a script
+#### Putting the pieces together in a script
 So we've decided to use a while loop to read through the lines of a file that lists genome URLs and download the URL on each line. 
 
 Let's turn that verbal description of what we want to do into a Bash script. 
@@ -288,4 +301,179 @@ Let's turn that verbal description of what we want to do into a Bash script.
   done < genomeURLs.txt
   ```
   
+  Let's make sure we understand the structure of what we did. We'll actually start at the bottom, where the code `done < genomeURLs.txt` is feeding our URLs file into the while loop. Then, jumping to the top, `while read -r line` is reading in each individual line of the URLs file. Inside the loop, `wget $line` is using `wget` to download whatever information is on the current line. This will continue until there are no more lines left in the file.
 </details>
+
+Now we can put together a file listing genome assembly URLs and test our script. 
+
+### Bash and variables
+With our simple script, the genome assemblies got downloaded to files with pretty clunky names- `https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/003/672/135/GCF_003672135.1_Obir_v5.4/GCF_003672135.1_Obir_v5.4_cds_from_genomic.fna.gz` got downloaded to something called `GCF_003672135.1_Obir_v5.4_cds_from_genomic.fna.gz`, for example. 
+
+That's annoying for two reasons. One, those names aren't super human-readable, so it might be hard to remember which file corresponds to which species. Second, the names aren't necessarily formatted consistently across different species, so it might be hard to work with those files in batches in the future. 
+
+<details>
+  <summary>What option could we add to our `wget` command to solve this problem?</summary>
+  
+  We can use the option `-O` with our `wget` command, to specific a file name for each download.
+  
+</details>
+
+Now the question becomes, how do we give each genome a different name? We can do this with **Bash variables**.
+
+A variable is a temporary way to store a piece of information and use it in a script. There are two things you can do with variables: set their value and read their value (i.e. create and use them). 
+
+Variable values can be **set** in a number of ways: you might directly assign them, or they might get assigned as the result of some processing done by your script. To directly assign a variable in your script, use the syntax `export [variable name]=[variable value]`, with backticks (   \`   ) around any code used in the variable value. So for instance, to create a variable that stores your current working directory, you might use the command:
+```
+export test=`pwd`
+```
+
+Formatting is important. Note there is no space on either side of the equals ( = ) sign. We also leave off the $ sign from the beginning of the variable name when setting it.
+
+To **read** a variable's value and use it in a script, just type the variable name after a `$`. 
+
+<details>
+  <summary>Knowing that variable names are preceded by a `$` when in use, what variable did we use in our simple script earlier?</summary>
+  
+  We can see that we had a variable called `$line` in our script.
+  
+</details>
+
+It's often useful to print the value of your variable to the command line, so you can check that it is storing the correct information. You can do this with the command `echo`, which prints out whatever information is after the command. Let's try that with our script, editing it to include `echo $line`:
+
+```
+  #!/bin/bash
+  
+  while read -r line;
+  do
+    echo $line
+    wget $line
+  done < genomeURLs.txt
+  ```
+  
+<details>
+  <summary>What information is being stored in $line?</summary>
+  
+  As our script loops through each line of genomeURLs.txt, `$line` stores the value of the line.
+  ```{bash, engine.opts='-l'}
+  # While reading each line of the file:
+      while read -r line;
+      do
+        # Echo the value of $line
+        echo $line
+        #wget $line
+      done < genomeURLs.txt
+  ```
+  
+</details>
+
+
+
+#### Setting up variables in our script
+Now let's think about how we can read information from our input file and assign it to variables in order to download each genome assembly to a sensibly-named file.
+
+One simple way is to add a second piece of information to our URLs file, giving each species' genome assembly a unique identifier. I like to use the first letter of the genus and first three letters of the species name for this (so *Atta cephalotes* becomes acep). Go ahead and edit the URLs input file so that each line has the URL, then the species identifier, separated from one another by a comma. 
+
+Let's check what's stored in the `$line` variable now. Edit your script, commenting out the `wget` command for now, to look like this:
+
+```
+  # While reading each line of the file:
+      while read -r line;
+      do
+        # Echo the value of $line
+        echo $line
+        #wget $line
+      done < genomeURLs.txt
+  ```
+  
+<details>
+  <summary>What information is being stored in $line now?</summary>
+  
+   Now each line has both the URL and a species code, and looks like 
+   ```
+   https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/204/515/GCF_000204515.1_Aech_3.9/GCF_000204515.1_Aech_3.9_cds_from_genomic.fna.gz,aech
+   ```
+  
+</details>
+
+Now, as our script reads each line of the input file, we can extract out the URLs and species codes and assign them to variables, so that we can both download the genome assembly, and give it a nice name. 
+
+So, how to extract those two pieces of information? Currently, both are stored TOGETHER in `$line`. We can use some text manipulating commands to extract each piece and assign it to its own variable.
+
+<details>
+  <summary>There are a lot of ways to do this. What do you find when you Google "extracting a piece of a text string with Bash"?</summary>
+  
+   Here are some useful links:
+   
++ [Some of these StackOverflow answers](https://stackoverflow.com/questions/428109/extract-substring-in-bash) could be useful.
++ [Another Stack overflow example](https://stackoverflow.com/questions/16040567/use-awk-to-extract-substring)
++ [This is also a great overview](https://www.baeldung.com/linux/bash-substring)
+  
+  
+</details>
+
+This is another example of a task that can be accomplished in a LOT of different ways. 
+
+<details>
+  <summary>This is what I would do.</summary>
+  
+   To extract the first chunk of information, the URL, I used the code:
+   
+   ```
+   export transcriptUrl=`echo "$line" | awk -F',' '{print $1}'`
+   ```
+   
+  This code echoes the value of `$line`, passes that information with a pipe command (   `|`   ) to `awk`, which splits up `$line` at the commas, and then finally prints out the first chunk that is produced. That data is assigned to the variable `$transcriptUrl`.
+  
+  Then to get the second piece of information, the species code, I used the code:
+  
+  ```
+  export speciesCode=`echo "$line" | awk -F',' '{print $2}'`
+  ```
+  
+  Can you tell what this code is doing?
+</details>
+
+Now we have extracted the URL and the species code into variables- great! Now we need to **use** those variables in our script. 
+
+<details>
+  <summary>How would you edit your script to use $transcriptUrl to download the genome assemblies? </summary>
+  
+  Instead of using `wget` to download the value of `$line`, now we use `wget` to download the value of `$genomeUrl`:
+  
+   ```
+  # While reading each line of the file:
+      while read -r line;
+      do
+        # Echo the value of $line
+        echo $line
+        # Create the transcriptUrl variable:
+        export transcriptUrl=`echo "$line" | awk -F',' '{print $1}'`
+        
+        # Create the speciesCode variable
+        export speciesCode=`echo "$line" | awk -F',' '{print $2}'`
+        
+        # Download the genome assembly, whose URL is stored in transcriptUrl:
+        wget $transcriptUrl
+      done < genomeURLs.txt
+  ```
+   
+</details>
+
+We have one last task to accomplish: downloading the genome assemblies to nicely named files. We have a species code, stored in `$speciesCode`, but that's not really enough- we don't want our genome assemblies to just be called `aech`, `acep`, etc.! We should construct a nicer name, maybe something like `aech_genomeAssembly.fna.gz`. 
+
+<details>
+  <summary>Can you create a variable that stores this nicer name? </summary>
+  
+  You can do this with the code:
+  
+  ```
+  export filename=$speciesCode'_genomeAssembly.fna.gz'
+  ```
+   
+  This glues together the value of `$speciesCode` and the text string _genomeAssembly.fna.gz and assigns it to the new variable, `$filename`. The single quotes ensure that _genomeAssembly.fna.gz is interpreted as plain text. 
+</details>
+
+### Bash and command line options
+With the way our script is currently written, it will only run on a specific file of assembly URLs, which must be named `genomeURLs.txt` and must be located in our current working directory. That's not super flexible!
+
+We can use **command line options** in our script in order to increase flexibility. In Bash, command line options that you enter on the command line are assigned to special variables called positional parameters.
